@@ -82,14 +82,20 @@ def train_model(data, save = False):
     optim = Adam(params = model.parameters(), lr = INIT_LR)
     loss_func = NLLLoss() # Negative log-likelihood loss
 
-    # Store training history for graphing and time training
+    # Store training history for graphing
     hist = {
         "train_loss": [],
         "train_accuracy": [],
         "val_loss": [],
         "val_accuracy": []
     }
+
+    # Time the training process
     start_time = time()
+
+    # Calculate steps per epoch
+    train_steps = len(train.dataset) // BATCH_SIZE
+    val_steps = len(val.dataset) // BATCH_SIZE
 
     # Loop over epochs
     for epoch in range(EPOCHS):
@@ -117,7 +123,7 @@ def train_model(data, save = False):
             train_loss += loss
             train_correct += (pred.argmax(1) == y).type(torch.float).sum().item()
 
-        # Evaluate current state of model by turning off gradient calculations
+        # Evaluate current state of model by disabling gradient calculations
         with torch.no_grad():
 
             # Set model to evalulation mode
@@ -133,29 +139,59 @@ def train_model(data, save = False):
                 # Calculate correct predictions
                 val_correct = (pred.argmax(1) == y).type(torch.float).sum().item()
 
-        # Compute epoch statistics
+        # Compute, record, and display epoch statistics
+        avg_train_loss = train_loss / train_steps # Average train loss
+        avg_val_loss = val_loss / val_steps # Average validation loss
+        train_acc = train_correct / len(train.dataset) # Train accuracy
+        val_acc = val_correct / len(val.dataset) # Validation accuracy
+        hist["train_loss"].append(avg_train_loss)
+        hist["train_accuracy"].append(train_acc)
+        hist["val_loss"].append(avg_val_loss)
+        hist["val_accuracy"].append(val_acc)
+        print("EPOCH: {}/{}".format(epoch + 1), EPOCHS)
+        print("Train loss: {:.4f}/tTrain accuracy: {:.4f}".format(avg_train_loss, train_acc))
+        print("Validation loss: {:.4f}/tValidation accuracy: {:.4f}".format(avg_val_loss, val_acc))
 
+    # Stop timing train period
+    end_time = time()
+    print("Total training time: {:.2f} seconds".format(end_time - start_time))
 
+    # Evaluate accuracy by disabling gradient calculations
+    with torch.no_grad():
 
+        # Set model to evaluation mode
+        model.eval()
 
+        # Calculate model accuracy 
+        num_correct = 0
+        for (x, y) in test:
+            pred = model(x)
+            num_correct += (pred.argmax(1) == y).type(torch.float).sum().item()
+        print("Model accuracy: {:.4f}%".format(num_correct / len(test.dataset)))
 
-
-
-
+    # Plot loss and accuracy
+    plt.figure()
+    plt.plot(hist["train_loss"], label = "Train loss")
+    plt.plot(hist["val_loss"], label = "Validation loss")
+    plt.plot(hist["train_accuracy"], label = "Train accuracy")
+    plt.plot(hist["val_accuracy"], label = "Validation accuracy")
+    plt.xlabel("Epoch")
+    plt.ylabel("Loss + Accuracy")
+    plt.title("Training Loss and Accuracy on GTSRB Dataset")
+    plt.show()
 
     # Save model if desired
     if save:
-        pass
+        torch.save(model.state_dict())
+
+# Display model functionality
+def test_model(data):
+
+    # Should choose 10 images from test set, predict + display results
+    raise NotImplementedError
 
 
-
-
-
-
-# Include a function to graph loss, model accuracy over time
-
-
-# read section 7
+# read section 7 
 # add-on to project: implement one of the more advanced models from section 8
 # read section 14
 
