@@ -41,6 +41,7 @@ def load_data(path):
             # Add image and its label to list
             labels.append(dir)
             imgs.append(r_img)
+    print()
 
     # Return images and corresponding labels
     return (imgs, labels)
@@ -98,6 +99,7 @@ def train_model(data, save = False):
     val_steps = len(val.dataset) // BATCH_SIZE
 
     # Loop over epochs
+    print("Beginning training...")
     for epoch in range(EPOCHS):
 
         # Set model to training mode, initialize total losses and accuracies
@@ -116,7 +118,7 @@ def train_model(data, save = False):
 
             # Zero gradient, perform backpropagation, update weights
             optim.zero_grad()
-            loss_func.backward()
+            loss.backward()
             optim.step()
 
             # Update losses and accuracies
@@ -137,23 +139,24 @@ def train_model(data, save = False):
                 val_loss += loss_func(pred, y)
 
                 # Calculate correct predictions
-                val_correct = (pred.argmax(1) == y).type(torch.float).sum().item()
+                val_correct += (pred.argmax(1) == y).type(torch.float).sum().item()
 
         # Compute, record, and display epoch statistics
         avg_train_loss = train_loss / train_steps # Average train loss
         avg_val_loss = val_loss / val_steps # Average validation loss
         train_acc = train_correct / len(train.dataset) # Train accuracy
         val_acc = val_correct / len(val.dataset) # Validation accuracy
-        hist["train_loss"].append(avg_train_loss)
+        hist["train_loss"].append(avg_train_loss.detach().numpy())
         hist["train_accuracy"].append(train_acc)
-        hist["val_loss"].append(avg_val_loss)
+        hist["val_loss"].append(avg_val_loss.detach().numpy())
         hist["val_accuracy"].append(val_acc)
-        print("EPOCH: {}/{}".format(epoch + 1), EPOCHS)
-        print("Train loss: {:.4f}/tTrain accuracy: {:.4f}".format(avg_train_loss, train_acc))
-        print("Validation loss: {:.4f}/tValidation accuracy: {:.4f}".format(avg_val_loss, val_acc))
+        print("EPOCH: {}/{}".format(epoch + 1, EPOCHS))
+        print("Train loss: {:.4f} | Train accuracy: {:.4f}".format(avg_train_loss, train_acc))
+        print("Validation loss: {:.4f} | Validation accuracy: {:.4f}".format(avg_val_loss, val_acc))
 
     # Stop timing train period
     end_time = time()
+    print()
     print("Total training time: {:.2f} seconds".format(end_time - start_time))
 
     # Evaluate accuracy by disabling gradient calculations
@@ -167,7 +170,7 @@ def train_model(data, save = False):
         for (x, y) in test:
             pred = model(x)
             num_correct += (pred.argmax(1) == y).type(torch.float).sum().item()
-        print("Model accuracy: {:.4f}%".format(num_correct / len(test.dataset)))
+        print("Model accuracy: {:.4f}%".format((num_correct / len(test.dataset)) * 100))
 
     # Plot loss and accuracy
     plt.figure()
@@ -175,6 +178,7 @@ def train_model(data, save = False):
     plt.plot(hist["val_loss"], label = "Validation loss")
     plt.plot(hist["train_accuracy"], label = "Train accuracy")
     plt.plot(hist["val_accuracy"], label = "Validation accuracy")
+    plt.legend(loc = "upper right")
     plt.xlabel("Epoch")
     plt.ylabel("Loss + Accuracy")
     plt.title("Training Loss and Accuracy on GTSRB Dataset")
@@ -189,12 +193,6 @@ def test_model(data):
 
     # Should choose 10 images from test set, predict + display results
     raise NotImplementedError
-
-
-# read section 7 
-# add-on to project: implement one of the more advanced models from section 8
-# read section 14
-
 
 if __name__ == "__main__":
     path = r"C:\Users\elyse\Desktop\traffic\gtsrb"
