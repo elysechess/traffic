@@ -7,6 +7,6 @@ structure described in open-source textbook Dive into Deep
 Learning.
 
 ### Files
-traffic.py: functions to load and display data + train model.
-model.py: LeNet implementation
+traffic.py: functions to load and display data + train model.\n
+model.py: LeNet implementation\n
 custom_dataset.py: custom Dataset to fit PyTorch DataLoader
