@@ -61,21 +61,18 @@ def disp_some_data(data):
 # Train the model
 def train_model(data, save = False):
     
-    # Split data into train, validation, and test sets
+    # Split data into train and test sets
     train_end = int(len(data[0]) * TRAIN_RATIO) # Ending index of training data
-    val_end = int(train_end + ((len(data[0]) - train_end) / 2)) # Ending index for validation data
     
     # Get (randomized) indices for each set
     indices = np.arange(len(data[0]))
     np.random.shuffle(indices)
-    train_i, val_i, test_i = indices[:train_end], indices[train_end:val_end], indices[val_end:]
+    train_i, test_i = indices[:train_end], indices[train_end:]
 
     # Initialize DataLoaders and input split data
     train_set = CustomDataSet([data[0][i] for i in train_i], [data[1][i] for i in train_i], ToTensor())
-    val_set = CustomDataSet([data[0][i] for i in val_i], [data[1][i] for i in val_i], ToTensor())
     test_set = CustomDataSet([data[0][i] for i in test_i], [data[1][i] for i in test_i], ToTensor())
     train = DataLoader(train_set, batch_size = BATCH_SIZE, shuffle = True)
-    val = DataLoader(val_set, batch_size = BATCH_SIZE, shuffle = False)
     test = DataLoader(test_set, batch_size = BATCH_SIZE, shuffle = False)
 
     # Initialize model, optimizer and loss function
@@ -87,8 +84,6 @@ def train_model(data, save = False):
     hist = {
         "train_loss": [],
         "train_accuracy": [],
-        "val_loss": [],
-        "val_accuracy": []
     }
 
     # Time the training process
@@ -96,7 +91,6 @@ def train_model(data, save = False):
 
     # Calculate steps per epoch
     train_steps = len(train.dataset) // BATCH_SIZE
-    val_steps = len(val.dataset) // BATCH_SIZE
 
     # Loop over epochs
     print("Beginning training...")
@@ -106,8 +100,6 @@ def train_model(data, save = False):
         model.train()
         train_loss = 0
         train_correct = 0
-        val_loss = 0
-        val_correct = 0
 
         # Loop over training data
         for (x, y) in train:
@@ -125,34 +117,13 @@ def train_model(data, save = False):
             train_loss += loss
             train_correct += (pred.argmax(1) == y).type(torch.float).sum().item()
 
-        # Evaluate current state of model by disabling gradient calculations
-        with torch.no_grad():
-
-            # Set model to evalulation mode
-            model.eval()
-
-            # Loop through validation data
-            for (x, y) in val:
-
-                # Make prediction and calculate validation loss
-                pred = model(x)
-                val_loss += loss_func(pred, y)
-
-                # Calculate correct predictions
-                val_correct += (pred.argmax(1) == y).type(torch.float).sum().item()
-
         # Compute, record, and display epoch statistics
         avg_train_loss = train_loss / train_steps # Average train loss
-        avg_val_loss = val_loss / val_steps # Average validation loss
         train_acc = train_correct / len(train.dataset) # Train accuracy
-        val_acc = val_correct / len(val.dataset) # Validation accuracy
         hist["train_loss"].append(avg_train_loss.detach().numpy())
         hist["train_accuracy"].append(train_acc)
-        hist["val_loss"].append(avg_val_loss.detach().numpy())
-        hist["val_accuracy"].append(val_acc)
         print("EPOCH: {}/{}".format(epoch + 1, EPOCHS))
         print("Train loss: {:.4f} | Train accuracy: {:.4f}".format(avg_train_loss, train_acc))
-        print("Validation loss: {:.4f} | Validation accuracy: {:.4f}".format(avg_val_loss, val_acc))
 
     # Stop timing train period
     end_time = time()
@@ -175,9 +146,7 @@ def train_model(data, save = False):
     # Plot loss and accuracy
     plt.figure()
     plt.plot(hist["train_loss"], label = "Train loss")
-    plt.plot(hist["val_loss"], label = "Validation loss")
     plt.plot(hist["train_accuracy"], label = "Train accuracy")
-    plt.plot(hist["val_accuracy"], label = "Validation accuracy")
     plt.legend(loc = "upper right")
     plt.xlabel("Epoch")
     plt.ylabel("Loss + Accuracy")
@@ -195,9 +164,13 @@ def test_model(data):
     raise NotImplementedError
 
 if __name__ == "__main__":
+
+    # Load data and display random subset
     path = r"C:\Users\elyse\Desktop\traffic\gtsrb"
     data = load_data(path)
     disp_some_data(data)
+
+    # Train model and display visual examples
     train_model(data)
 
     

@@ -22,9 +22,9 @@ class LeNet(nn.Module):
         self.maxpool2 = nn.MaxPool2d(kernel_size = (2, 2), stride = (2, 2), padding = 1)
 
         # Dense block
-        self.linear1 = nn.Linear(in_features = 400, out_features = 84)
+        self.linear1 = nn.Linear(in_features = 400, out_features = 200)
         self.relu3 = nn.ReLU()
-        self.linear2 = nn.Linear(in_features = 84, out_features = n_pos_out)
+        self.linear2 = nn.Linear(in_features = 200, out_features = n_pos_out)
         self.logsoftmax = nn.LogSoftmax(dim = 1) # Softmax classifier
 
     # Override forward method of nn.Module
