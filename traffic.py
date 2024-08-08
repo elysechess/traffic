@@ -11,6 +11,7 @@ from torch.optim import Adam
 import torch
 import numpy as np
 from time import time
+import sys
 
 
 IMG_WIDTH = 30
@@ -20,11 +21,61 @@ TRAIN_RATIO = 0.8
 BATCH_SIZE = 64
 INIT_LR = 1e-3
 EPOCHS = 10
+CATEGORY_KEY = {
+    0: "speed limit (20 km/h)",
+    1: "speed limit (30 km/h)",
+    2: "speed limit (50 km/h)",
+    3: "speed limit (60 km/h)", 
+    4: "speed limit (70 km/h)",
+    5: "speed limit (80 km/h)",
+    6: "end of speed limit (80 km/h)",
+    7: "speed limit (100 km/h)",
+    8: "speed limit (120 km/h)",
+    9: "no passing",
+    10: "no passing for vehicles over 3.5 metric tons",
+    11: "right of way at next intersection",
+    12: "priority road",
+    13: "yield",
+    14: "stop",
+    15: "no vehicles",
+    16: "no vehicles over 3.5 metric tons",
+    17: "no entry",
+    18: "caution",
+    19: "watch curve to left",
+    20: "watch curve to right",
+    21: "double curve",
+    22: "bumpy road",
+    23: "slippery road",
+    24: "road narrows on right",
+    25: "road work",
+    26: "traffic signals",
+    27: "pedestrians",
+    28: "children crossing",
+    29: "bicycles crossing",
+    30: "beware of ice/snow",
+    31: "wild animals crossing",
+    32: "end of speed/passing limits",
+    33: "turn right ahead",
+    34: "turn left ahead",
+    35: "ahead only",
+    36: "straight or right",
+    37: "straight or left",
+    38: "keep right",
+    39: "keep left",
+    40: "roundabout",
+    41: "end no passing",
+    42: "end no passing for vehicles over 3.5 tons"
+}
 
-# Accepts path to data, returns image arrays and labels
+# Accepts path to data, displays subset and returns image arrays and labels
 def load_data(path):
     imgs = []
     labels = []
+
+    # Create plot
+    fig = plt.figure(figsize = (20, 8))
+    plt.title("Examples from Dataset")
+    plt.axis("off")
 
     # Iterate through each directory within gtsrb
     for dir in range(NUM_CATEGORIES):
@@ -32,7 +83,8 @@ def load_data(path):
         print("Processing category " + str(dir) + "...")
 
         # Iterate through all images within directory
-        for img_name in os.listdir(d_path):
+        s_dir = os.listdir(d_path)
+        for img_name in s_dir:
 
             # Get image and resize
             img = cv2.imread(os.path.join(d_path, str(img_name)))
@@ -41,25 +93,25 @@ def load_data(path):
             # Add image and its label to list
             labels.append(dir)
             imgs.append(r_img)
+
+        # Add random image from directory to plot
+        ax = fig.add_subplot(5, 9, dir + 1)
+        img_name = s_dir[randint(0, len(s_dir) - 1)]
+        img = cv2.imread(os.path.join(d_path, str(img_name)))
+        r_img = cv2.resize(img, (IMG_WIDTH, IMG_HEIGHT), interpolation = cv2.INTER_LINEAR)
+        ax.imshow(r_img)
+        ax.set_title(CATEGORY_KEY[dir], fontsize = 8)
+        ax.axis("off")
     print()
+
+    # Display data samples
+    plt.show()
 
     # Return images and corresponding labels
     return (imgs, labels)
 
-# Displays random example images from dataset
-def disp_some_data(data):
-    fig = plt.figure(figsize = (10, 7))
-    plt.title("Examples from Dataset")
-    plt.axis("off")
-    for ex in range(49):
-        fig.add_subplot(7, 7, ex + 1)
-        rand_ex = data[0][randint(0, len(data[0]) - 1)]
-        plt.imshow(rand_ex)
-        plt.axis("off")
-    plt.show()
-
 # Train the model
-def train_model(data, save = False):
+def train_model(data):
     
     # Split data into train and test sets
     train_end = int(len(data[0]) * TRAIN_RATIO) # Ending index of training data
@@ -153,27 +205,22 @@ def train_model(data, save = False):
     plt.title("Training Loss and Accuracy on GTSRB Dataset")
     plt.show()
 
-    # Save model if desired
-    if save:
-        torch.save(model.state_dict())
+def main():
 
-# Display model functionality
-def test_model(data):
-
-    # Should choose 10 images from test set, predict + display results
-    raise NotImplementedError
-
-if __name__ == "__main__":
+    # Check for proper command line arguments
+    if len(sys.argv) != 2 and len(sys.argv) != 3:
+        sys.exit("Usage: python traffic.py data_directory path_to_save_model (optional)")
 
     # Load data and display random subset
-    path = r"C:\Users\elyse\Desktop\traffic\gtsrb"
-    data = load_data(path)
-    disp_some_data(data)
+    data = load_data(sys.argv[1])
 
-    # Train model and display visual examples
-    train_model(data)
+    # Train model and display visual examples 
+    model = train_model(data)
 
-    
+    # Save model if desired
+    if len(sys.argv) == 3:
+        torch.save(model.state_dict(), sys.argv[2])
+        print("Model saved to {filename}".format(filename = sys.argv[2]))
 
-
-
+if __name__ == "__main__":
+    main()
