@@ -1,4 +1,4 @@
-opencv-python
+pillow
 torch
 torchvision
 numpy<2.0

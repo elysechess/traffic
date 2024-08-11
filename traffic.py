@@ -1,4 +1,4 @@
-import cv2
+from PIL import Image
 import os
 import matplotlib.pyplot as plt
 from random import randint
@@ -22,37 +22,37 @@ BATCH_SIZE = 64
 INIT_LR = 1e-3
 EPOCHS = 10
 CATEGORY_KEY = {
-    0: "speed limit (20 km/h)",
-    1: "speed limit (30 km/h)",
-    2: "speed limit (50 km/h)",
-    3: "speed limit (60 km/h)", 
-    4: "speed limit (70 km/h)",
-    5: "speed limit (80 km/h)",
-    6: "end of speed limit (80 km/h)",
-    7: "speed limit (100 km/h)",
-    8: "speed limit (120 km/h)",
+    0: "20 km/h",
+    1: "30 km/h",
+    2: "50 km/h",
+    3: "60 km/h", 
+    4: "70 km/h",
+    5: "80 km/h",
+    6: "end 80 km/h",
+    7: "100 km/h",
+    8: "120 km/h",
     9: "no passing",
-    10: "no passing for vehicles over 3.5 metric tons",
-    11: "right of way at next intersection",
+    10: "no passing ( > 3.5 mt)",
+    11: "right of way",
     12: "priority road",
     13: "yield",
     14: "stop",
     15: "no vehicles",
-    16: "no vehicles over 3.5 metric tons",
+    16: "no vehicles > 3.5 mt",
     17: "no entry",
     18: "caution",
-    19: "watch curve to left",
-    20: "watch curve to right",
+    19: "watch curve left",
+    20: "watch curve right",
     21: "double curve",
     22: "bumpy road",
     23: "slippery road",
-    24: "road narrows on right",
+    24: "road narrows right",
     25: "road work",
     26: "traffic signals",
     27: "pedestrians",
     28: "children crossing",
     29: "bicycles crossing",
-    30: "beware of ice/snow",
+    30: "ice/snow",
     31: "wild animals crossing",
     32: "end of speed/passing limits",
     33: "turn right ahead",
@@ -64,7 +64,7 @@ CATEGORY_KEY = {
     39: "keep left",
     40: "roundabout",
     41: "end no passing",
-    42: "end no passing for vehicles over 3.5 tons"
+    42: "end no passing (> 3.5 mt)"
 }
 
 # Accepts path to data, displays subset and returns image arrays and labels
@@ -87,8 +87,8 @@ def load_data(path):
         for img_name in s_dir:
 
             # Get image and resize
-            img = cv2.imread(os.path.join(d_path, str(img_name)))
-            r_img = cv2.resize(img, (IMG_WIDTH, IMG_HEIGHT), interpolation = cv2.INTER_LINEAR)
+            img = Image.open(os.path.join(d_path, str(img_name)))
+            r_img = img.resize((IMG_WIDTH, IMG_HEIGHT))
 
             # Add image and its label to list
             labels.append(dir)
@@ -97,8 +97,8 @@ def load_data(path):
         # Add random image from directory to plot
         ax = fig.add_subplot(5, 9, dir + 1)
         img_name = s_dir[randint(0, len(s_dir) - 1)]
-        img = cv2.imread(os.path.join(d_path, str(img_name)))
-        r_img = cv2.resize(img, (IMG_WIDTH, IMG_HEIGHT), interpolation = cv2.INTER_LINEAR)
+        img = Image.open(os.path.join(d_path, str(img_name)))
+        r_img = img.resize((IMG_WIDTH, IMG_HEIGHT))
         ax.imshow(r_img)
         ax.set_title(CATEGORY_KEY[dir], fontsize = 8)
         ax.axis("off")
@@ -204,12 +204,13 @@ def train_model(data):
     plt.ylabel("Loss + Accuracy")
     plt.title("Training Loss and Accuracy on GTSRB Dataset")
     plt.show()
+    return model
 
 def main():
 
     # Check for proper command line arguments
     if len(sys.argv) != 2 and len(sys.argv) != 3:
-        sys.exit("Usage: python traffic.py data_directory path_to_save_model (optional)")
+        sys.exit("Usage: python traffic.py data_directory [saved_model_name.pt]")
 
     # Load data and display random subset
     data = load_data(sys.argv[1])
