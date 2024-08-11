@@ -76,6 +76,7 @@ def load_data(path):
     fig = plt.figure(figsize = (20, 8))
     plt.title("Examples from Dataset")
     plt.axis("off")
+    plt.tight_layout()
 
     # Iterate through each directory within gtsrb
     for dir in range(NUM_CATEGORIES):
